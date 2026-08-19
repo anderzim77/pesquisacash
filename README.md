@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ganhei Show App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* BARRA SUPERIOR */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .btn-open-sidebar {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-open-sidebar:active {
+      transform: scale(0.95);
+    }
+
+    /* OVERLAY E MENU LATERAL (DRAWER) */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      display: none;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background-color: #0f172a;
+      border-left: 1px solid #334155;
+      z-index: 1000;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      right: 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 12px;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .btn-close-sidebar {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    /* CARTEIRA DENTRO DA SIDEBAR */
+    .sidebar-wallet {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .wallet-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    .wallet-balance {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .user-badge-sidebar {
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px 8px;
+      border-radius: 6px;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    /* JOGO DENTRO DA SIDEBAR */
+    .game-card-sidebar {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .game-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .game-score {
+      font-size: 11px;
+      font-weight: 700;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+      padding: 3px 8px;
+      border-radius: 8px;
+      border: 1px solid #10b981;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .ball {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background-color: #ef4444;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .ball:active {
+      transform: scale(0.9);
+    }
+
+    .ball.green {
+      background-color: #10b981 !important;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    .btn-start-game {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-start-game:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    /* TELA PRINCIPAL */
+    .vip-banner-compact {
+      background: linear-gradient(135deg, #312e81, #1e1b4b);
+      border: 1px solid #6366f1;
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .vip-banner-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .vip-banner-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+
+    .vip-banner-sub {
+      font-size: 11px;
+      color: #c7d2fe;
+    }
+
+    .badge-em-breve-sm {
+      background-color: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+    }
+
+    .rewards-carousel {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding-bottom: 8px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .rewards-carousel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .reward-item {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      text-align: center;
+      min-width: 140px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+
+    .reward-icon {
+      font-size: 28px;
+    }
+
+    .reward-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .reward-cost {
+      font-size: 12px;
+      color: #38bdf8;
+      font-weight: 500;
+    }
+
+    .btn-withdraw {
+      margin-top: 8px;
+      width: 100%;
+      background-color: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .info-card {
+      background-color: #1e293b;
+      border-left: 4px solid #38bdf8;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .history-date {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .history-details {
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .badge-status {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-Pendente {
+      background-color: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+    }
+
+    .badge-Pago {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid #10b981;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 20px;
+      background-color: #1e293b;
+      border-radius: 12px;
+      border: 1px dashed #334155;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    /* MODAIS */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      text-align: center;
+    }
+
+    .modal-text {
+      font-size: 13px;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .form-control {
+      width: 100%;
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      color: #f8fafc;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-confirm {
+      flex: 1;
+      background-color: #10b981;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      background-color: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- OVERLAY E MENU LATERAL DA CARTEIRA & JOGO -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Painel do Jogador</span>
+      <button class="btn-close-sidebar" onclick="toggleSidebar()">&times;</button>
+    </div>
+
+    <!-- CARTEIRA NA SIDEBAR -->
+    <div class="sidebar-wallet">
+      <span class="wallet-label">Minha Carteira</span>
+      <div class="wallet-balance" id="saldo-pontos">...</div>
+      <div class="user-badge-sidebar" id="user-id-display">ID: ---</div>
+    </div>
+
+    <!-- JOGO NA SIDEBAR -->
+    <div class="game-card-sidebar">
+      <div class="game-header">
+        <span class="game-title">🎯 Desafio Verde</span>
+        <span class="game-score" id="game-progress">0/5</span>
+      </div>
+
+      <div class="game-grid" id="game-grid">
+        <div class="ball" onclick="clicarBolinha(0)"></div>
+        <div class="ball" onclick="clicarBolinha(1)"></div>
+        <div class="ball" onclick="clicarBolinha(2)"></div>
+        <div class="ball" onclick="clicarBolinha(3)"></div>
+        <div class="ball" onclick="clicarBolinha(4)"></div>
+        <div class="ball" onclick="clicarBolinha(5)"></div>
+        <div class="ball" onclick="clicarBolinha(6)"></div>
+        <div class="ball" onclick="clicarBolinha(7)"></div>
+      </div>
+
+      <button class="btn-start-game" id="btn-start-game" onclick="iniciarJogo()">Jogar Rodada (+5 Pts)</button>
+    </div>
+  </div>
+
+  <!-- CONTAINER PRINCIPAL DA TELA -->
+  <div class="app-container">
+    
+    <div class="app-header">
+      <div class="app-title">Ganhei Show</div>
+      <button class="btn-open-sidebar" onclick="toggleSidebar()">
+        <span>👛 Carteira & Jogo</span>
+      </button>
+    </div>
+
+    <!-- BANNER COMPACTO VIP -->
+    <div class="vip-banner-compact" onclick="abrirModalVip()">
+      <div class="vip-banner-info">
+        <span style="font-size:22px;">👑</span>
+        <div>
+          <div class="vip-banner-title">Seja Membro VIP</div>
+          <div class="vip-banner-sub">Benefícios exclusivos por R$ 8,00</div>
+        </div>
+      </div>
+      <span class="badge-em-breve-sm">Em Breve</span>
+    </div>
+
+    <div class="info-card">
+      💡 <b>Dica:</b> Clique no botão da carteira no topo para jogar o Desafio Verde e acumular pontos!
+    </div>
+
+    <div>
+      <div class="section-title">Opções de Resgate</div>
+      <div class="rewards-carousel" id="rewards-container">
+        <div class="history-empty" style="width: 100%;">Buscando opções...</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Histórico de Resgates</div>
+      <div id="historico-lista" class="history-list">
+        <div class="history-empty">Carregando histórico...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAIS -->
+  <div class="modal-overlay" id="vip-modal">
+    <div class="modal-content">
+      <div class="modal-title" style="color: #fbbf24;">👑 Clube VIP</div>
+      <div class="modal-text">Benefícios e facilidades exclusivas por apenas R$ 8,00/mês em breve!</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" style="width: 100%;" onclick="fecharModalVip()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="saque-modal">
+    <div class="modal-content">
+      <div class="modal-title" id="modal-title">Solicitar Saque PIX</div>
+      <div class="modal-text" id="modal-desc">Preencha seus dados para receber:</div>
+
+      <div id="modal-body">
+        <div class="form-group">
+          <label for="tipo-chave">Tipo de Chave PIX</label>
+          <select id="tipo-chave" class="form-control">
+            <option value="CPF">CPF</option>
+            <option value="Celular">Celular</option>
+            <option value="E-mail">E-mail</option>
+            <option value="Aleatoria">Chave Aleatória</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="chave-pix">Sua Chave PIX</label>
+          <input type="text" id="chave-pix" class="form-control" placeholder="Digite sua chave...">
+        </div>
+      </div>
+
+      <div class="modal-actions" id="modal-actions">
+        <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-confirm" id="btn-enviar-saque" onclick="confirmarSaque()">Confirmar Saque</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, push, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6URoPssZemFyTDU_0u1bAHyhimk4f2d0",
+      authDomain: "ganheishow.firebaseapp.com",
+      databaseURL: "https://ganheishow-default-rtdb.firebaseio.com",
+      projectId: "ganheishow",
+      storageBucket: "ganheishow.firebasestorage.app",
+      messagingSenderId: "458543082047",
+      appId: "1:458543082047:web:d4c7fd8f91001315dee68a",
+      measurementId: "G-ZQ5CRQ05YR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const saldoElement = document.getElementById("saldo-pontos");
+    const userIdDisplay = document.getElementById("user-id-display");
+    const historicoLista = document.getElementById("historico-lista");
+    const rewardsContainer = document.getElementById("rewards-container");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('uid');
+
+    let pontosAtuais = 0;
+    let valorSaqueAtual = 0;
+    let pontosSaqueAtual = 0;
+
+    let jogoAtivo = false;
+    let indiceVerde = -1;
+    let acertosRodada = 0;
+    let intervalJogo = null;
+
+    // CONTROLE DA SIDEBAR
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebar-overlay");
+      
+      if (sidebar.classList.contains("open")) {
+        sidebar.classList.remove("open");
+        overlay.style.display = "none";
+      } else {
+        sidebar.classList.add("open");
+        overlay.style.display = "block";
+      }
+    };
+
+    if (userId) {
+      userIdDisplay.innerText = "ID: " + userId.substring(0, 6) + "...";
+
+      onValue(ref(db, 'users/' + userId + '/pontos'), (snapshot) => {
+        pontosAtuais = snapshot.val() || 0;
+        saldoElement.innerText = pontosAtuais + " pts";
+      });
+
+      const saquesQuery = query(ref(db, 'saques'), orderByChild('userId'), equalTo(userId));
+      onValue(saquesQuery, (snapshot) => {
+        historicoLista.innerHTML = "";
+
+        if (snapshot.exists()) {
+          const saquesObj = snapshot.val();
+          const saquesArray = Object.keys(saquesObj).map(key => ({
+            id: key,
+            ...saquesObj[key]
+          })).reverse();
+
+          saquesArray.forEach(item => {
+            const dataObj = new Date(item.data);
+            const dataFormatada = isNaN(dataObj) ? item.data : dataObj.toLocaleDateString('pt-BR');
+
+            historicoLista.innerHTML += `
+              <div class="history-item">
+                <div class="history-info">
+                  <span class="history-val">PIX R$ ${item.valorReais},00</span>
+                  <span class="history-details">${item.tipoChave}: ${item.chavePix}</span>
+                  <span class="history-date">${dataFormatada}</span>
+                </div>
+                <div>
+                  <span class="badge-status badge-${item.status}">${item.status}</span>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          historicoLista.innerHTML = '<div class="history-empty">Nenhum saque realizado ainda.</div>';
+        }
+      });
+
+    } else {
+      saldoElement.innerText = "0 pts";
+      userIdDisplay.innerText = "Modo Demo";
+      historicoLista.innerHTML = '<div class="history-empty">Abra pelo App para carregar o histórico.</div>';
+    }
+
+    // LÓGICA DO JOGO
+    window.iniciarJogo = function() {
+      if (!userId) {
+        alert("Acesse pelo app para registrar seus pontos!");
+        return;
+      }
+
+      jogoAtivo = true;
+      acertosRodada = 0;
+      document.getElementById("game-progress").innerText = "0/5";
+      document.getElementById("btn-start-game").disabled = true;
+      document.getElementById("btn-start-game").innerText = "Procure a verde...";
+
+      moverBolinhaVerde();
+      intervalJogo = setInterval(moverBolinhaVerde, 900);
+    };
+
+    function moverBolinhaVerde() {
+      const balls = document.querySelectorAll('.ball');
+      balls.forEach(b => b.classList.remove('green'));
+
+      let novoIndice;
+      do {
+        novoIndice = Math.floor(Math.random() * balls.length);
+      } while (novoIndice === indiceVerde);
+
+      indiceVerde = novoIndice;
+      balls[indiceVerde].classList.add('green');
+    }
+
+    window.clicarBolinha = function(index) {
+      if (!jogoAtivo) return;
+
+      if (index === indiceVerde) {
+        acertosRodada++;
+        pontosAtuais += 1;
+        set(ref(db, 'users/' + userId + '/pontos'), pontosAtuais);
+
+        document.getElementById("game-progress").innerText = `${acertosRodada}/5`;
+
+        if (acertosRodada >= 5) {
+          clearInterval(intervalJogo);
+          jogoAtivo = false;
+          document.querySelectorAll('.ball').forEach(b => b.classList.remove('green'));
+          iniciarCooldown();
+        } else {
+          moverBolinhaVerde();
+        }
+      }
+    };
+
+    function iniciarCooldown() {
+      let tempoRestante = 30;
+      const btn = document.getElementById("btn-start-game");
+      btn.disabled = true;
+
+      const timer = setInterval(() => {
+        btn.innerText = `Aguarde (${tempoRestante}s)`;
+        tempoRestante--;
+
+        if (tempoRestante < 0) {
+          clearInterval(timer);
+          btn.disabled = false;
+          btn.innerText = "Jogar Novamente (+5 Pts)";
+          document.getElementById("game-progress").innerText = "0/5";
+        }
+      }, 1000);
+    }
+
+    // LISTAR OPÇÕES DE SAQUE
+    onValue(ref(db, 'opcoes_saque'), (snapshot) => {
+      rewardsContainer.innerHTML = "";
+
+      if (snapshot.exists()) {
+        const opcoesObj = snapshot.val();
+        const opcoesArray = Object.keys(opcoesObj).map(key => ({
+          id: key,
+          ...opcoesObj[key]
+        })).sort((a, b) => a.valor - b.valor);
+
+        opcoesArray.forEach(opcao => {
+          rewardsContainer.innerHTML += `
+            <div class="reward-item">
+              <div class="reward-icon">${opcao.icone || "💸"}</div>
+              <div class="reward-name">PIX R$ ${opcao.valor},00</div>
+              <div class="reward-cost">${opcao.pontos} Pts</div>
+              <button class="btn-withdraw" onclick="abrirModalSaque(${opcao.pontos}, ${opcao.valor})">Resgatar</button>
+            </div>
+          `;
+        });
+      } else {
+        rewardsContainer.innerHTML = '<div class="history-empty" style="width: 100%;">Nenhuma opção disponível.</div>';
+      }
+    });
+
+    window.abrirModalVip = function() {
+      document.getElementById("vip-modal").style.display = "flex";
+    };
+
+    window.fecharModalVip = function() {
+      document.getElementById("vip-modal").style.display = "none";
+    };
+
+    window.abrirModalSaque = function(pontosNecessarios, valor) {
+      if (!userId) return alert("Acesse via app.");
+
+      const modal = document.getElementById("saque-modal");
+      const title = document.getElementById("modal-title");
+      const desc = document.getElementById("modal-desc");
+      const body = document.getElementById("modal-body");
+      const actions = document.getElementById("modal-actions");
+
+      if (pontosAtuais < pontosNecessarios) {
+        title.innerText = "Pontos Insuficientes";
+        desc.innerText = `Você precisa de ${pontosNecessarios} pts para resgatar R$ ${valor}.`;
+        body.style.display = "none";
+        actions.innerHTML = '<button class="btn-cancel" style="width:100%" onclick="fecharModal()">Entendi</button>';
+      } else {
+        pontosSaqueAtual = pontosNecessarios;
+        valorSaqueAtual = valor;
+        title.innerText = `Resgatar R$ ${valor},00`;
+        desc.innerText = "Informe seus dados PIX:";
+        body.style.display = "block";
+        actions.innerHTML = `
+          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+          <button class="btn-confirm" onclick="confirmarSaque()">Confirmar</button>
+        `;
+      }
+
+      modal.style.display = "flex";
+    };
+
+    window.confirmarSaque = function() {
+      const tipoChave = document.getElementById("tipo-chave").value;
+      const chavePix = document.getElementById("chave-pix").value.trim();
+
+      if (!chavePix) return alert("Digite a chave PIX!");
+
+      const novoSaqueRef = push(ref(db, 'saques'));
+      set(novoSaqueRef, {
+        userId: userId,
+        valorReais: valorSaqueAtual,
+        pontosDescontados: pontosSaqueAtual,
+        tipoChave: tipoChave,
+        chavePix: chavePix,
+        status: "Pendente",
+        data: new Date().toISOString()
+      }).then(() => {
+        set(ref(db, 'users/' + userId + '/pontos'), pontosAtuais - pontosSaqueAtual);
+        document.getElementById("modal-title").innerText = "Sucesso!";
+        document.getElementById("modal-desc").innerText = "Sua solicitação foi registrada.";
+        document.getElementById("modal-body").style.display = "none";
+        document.getElementById("modal-actions").innerHTML = '<button class="btn-confirm" style="width:100%" onclick="fecharModal()">Concluir</button>';
+      });
+    };
+
+    window.fecharModal = function() {
+      document.getElementById("saque-modal").style.display = "none";
+    };
+  </script>
+
+</body>
+</html>
